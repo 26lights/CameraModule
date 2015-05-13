@@ -118,6 +118,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceDestroyed(SurfaceHolder holder) {
         Timber.d("surfaceDestroyed");
         stopPreview();
+        camera.release();
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
