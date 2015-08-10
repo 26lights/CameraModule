@@ -35,14 +35,12 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
-    <style name="Theme.TranslucentNavigationBar" parent="android:Theme.Holo.Light.NoActionBar.TranslucentDecor">
-        <item name="android:windowTranslucentStatus">false</item>
+    <style name="Theme.TranslucentNavigationBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowFullscreen">false</item>
     </style>
 
-    <style name="Theme.TransparentActionBar" parent="android:Theme.Holo.NoActionBar.TranslucentDecor">
+    <style name="Theme.TransparentActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:actionBarStyle">@style/Widget.ActionBar.Transparent</item>
-        <item name="android:windowTranslucentStatus">false</item>
         <item name="android:windowActionBar">true</item>
         <item name="android:windowNoTitle">false</item>
     </style>

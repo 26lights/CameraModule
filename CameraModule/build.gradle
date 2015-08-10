@@ -31,5 +31,6 @@ dependencies {
     compile 'com.edmodo:cropper:1.0.1'
     compile 'com.squareup.picasso:picasso:2.2.0'
     compile 'com.jakewharton.timber:timber:2.2.2'
+    compile 'com.android.support:appcompat-v7:22.2.1'
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
