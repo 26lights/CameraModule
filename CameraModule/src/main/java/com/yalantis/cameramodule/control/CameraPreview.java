@@ -76,8 +76,13 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private Rect tapArea;
     private KeyEventsListener keyEventsListener;
 
+    // When the surface is destroyed the camera is released.
+    // This variable will know when this event occurs occurs.
+    private boolean mCameraReleased;
+
     public CameraPreview(Activity activity, Camera camera, ImageView canvasFrame, FocusCallback focusCallback, KeyEventsListener keyEventsListener) {
         super(activity);
+        mCameraReleased = false;
         this.activity = activity;
         this.camera = camera;
         this.canvasFrame = canvasFrame;
@@ -100,6 +105,22 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
+    /* camera was released ? */
+    public boolean wasReleased() {
+        return mCameraReleased;
+    }
+
+    /*
+    * @param isNew  if is new camera after release call from camera (recicle of CameraPreview).
+    */
+    public void setCamera(Camera camera, boolean isNew) {
+        this.camera = camera;
+        if (wasReleased() && isNew) {
+            initHolder();
+            mCameraReleased = false;
+        }
+    }
+
     private void initFocusDrawingTools(int width, int height) {
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_4444);
         canvas = new Canvas(bitmap);
@@ -117,8 +138,10 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
 
     public void surfaceDestroyed(SurfaceHolder holder) {
         Timber.d("surfaceDestroyed");
+        holder.removeCallback(this);
         stopPreview();
         camera.release();
+        mCameraReleased = true;
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {

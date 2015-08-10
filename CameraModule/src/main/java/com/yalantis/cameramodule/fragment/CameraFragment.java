@@ -31,7 +31,12 @@ import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.yalantis.cameramodule.CameraConst;
 import com.yalantis.cameramodule.R;
@@ -122,6 +127,10 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setupCamera();
+    }
+
+    private void setupCamera() {
         boolean useFrontCamera = getArguments().getBoolean(FRONT_CAMERA, false);
         camera = getCameraInstance(useFrontCamera);
         if (camera == null) {
@@ -144,8 +153,7 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
             }
         }
         //it returns false positive
-        /*getActivity().getApplicationContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);*/
+        /*getActivity().getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);*/
         List<String> flashModes = parameters.getSupportedFlashModes();
         if (flashModes == null || flashModes.size() <= 1) { /* Device has no flash */
             supportedFlash = false;
@@ -290,12 +298,18 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     @Override
     public void onResume() {
         super.onResume();
-        if (camera != null) {
+        // If the camera has been released, once the surface has been destroyed,
+        // a new instance to be created.
+        if (camera != null && !cameraPreview.wasReleased()) {
             try {
                 camera.reconnect();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        } else {
+            setupCamera();
+            if (camera != null)
+                cameraPreview.setCamera(camera, true);
         }
         if (orientationListener == null) {
             initOrientationListener();
