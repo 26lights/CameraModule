@@ -51,6 +51,6 @@ android {
 }
 
 dependencies {
-    compile project(':CameraModule')
+    compile project(':camera-module')
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }
