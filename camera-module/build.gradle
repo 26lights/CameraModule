@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 
-version = "1.0.0-26L"
+version = "1.0.1-26L"
 group = "yalantis.cameramodule"
 
 repositories {
@@ -15,7 +15,7 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 22
-        versionCode 2
+        versionCode 3
         versionName version
     }
 

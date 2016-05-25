@@ -69,6 +69,7 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     public static final String FLASH_MODE = "flash_mode";
     public static final String HDR_MODE = "hdr_mode";
     public static final String FRONT_CAMERA = "front_camera";
+    private KeyEventsListener keyEventsListener;
     private PhotoTakenCallback callback;
     private RawPhotoTakenCallback rawCallback;
     private CameraParamsChangedListener paramsChangedListener;
@@ -108,6 +109,17 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
 
     public static CameraFragment newInstance(int layoutId, PhotoTakenCallback callback, Bundle params) {
         CameraFragment fragment = new CameraFragment();
+        fragment.keyEventsListener = fragment;
+        fragment.layoutId = layoutId;
+        fragment.callback = callback;
+        fragment.setArguments(params);
+
+        return fragment;
+    }
+
+    public static CameraFragment newInstance(int layoutId, PhotoTakenCallback callback, KeyEventsListener keyEventsListener, Bundle params) {
+        CameraFragment fragment = new CameraFragment();
+        fragment.keyEventsListener = keyEventsListener;
         fragment.layoutId = layoutId;
         fragment.callback = callback;
         fragment.setArguments(params);
@@ -117,6 +129,7 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
 
     public static CameraFragment newInstance(PhotoTakenCallback callback, Bundle params) {
         CameraFragment fragment = new CameraFragment();
+        fragment.keyEventsListener = fragment;
         fragment.callback = callback;
         fragment.layoutId = R.layout.fragment_camera;
         fragment.setArguments(params);
@@ -202,7 +215,8 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
 
                 @Override
                 public void onClick(View v) {
-                    takePhoto();
+                    keyEventsListener.takePhoto();
+                    cameraPreview.takePicture();
                 }
 
             });
@@ -524,7 +538,6 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
         if (progressBar != null) {
             progressBar.setVisibility(View.VISIBLE);
         }
-        cameraPreview.takePicture();
     }
 
     private void setZoom(int index) {
