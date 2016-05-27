@@ -31,9 +31,9 @@ import java.io.IOException;
 import timber.log.Timber;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.os.AsyncTask;
 
+import com.jni.bitmap_operations.JniBitmapHolder;
 import com.yalantis.cameramodule.CameraConst;
 import com.yalantis.cameramodule.interfaces.PhotoSavedListener;
 
@@ -52,9 +52,31 @@ public class RotatePhotoTask extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... params) {
         Bitmap bitmap = BitmapFactory.decodeFile(path); // todo NPE
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+        // store the bitmap in the JNI "world"
+        final JniBitmapHolder bitmapHolder=new JniBitmapHolder(bitmap);
+        // no need for the bitmap on the java "world", since the operations are done on the JNI "world"
+        bitmap.recycle();
+
+        //rotate the bitmap:
+        switch (Float.valueOf(angle%360).intValue()) {
+            case 90:
+            case -270:
+                bitmapHolder.rotateBitmapCw90();
+                break;
+            case 180:
+            case -180:
+                bitmapHolder.rotateBitmap180();
+                break;
+            case 270:
+            case -90:
+                bitmapHolder.rotateBitmapCcw90();
+                break;
+        }
+
+        //get the output java bitmap , and free the one on the JNI "world"
+        bitmap=bitmapHolder.getBitmapAndFree();
+
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(new File(path));

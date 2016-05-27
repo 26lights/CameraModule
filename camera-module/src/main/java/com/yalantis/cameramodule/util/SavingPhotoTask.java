@@ -31,11 +31,11 @@ import java.io.IOException;
 import timber.log.Timber;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.os.AsyncTask;
 import android.os.Environment;
 
+import com.jni.bitmap_operations.JniBitmapHolder;
 import com.yalantis.cameramodule.CameraConst;
 import com.yalantis.cameramodule.interfaces.PhotoSavedListener;
 
@@ -108,9 +108,31 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
 
         time = System.currentTimeMillis();
         if (orientation != 0 && bitmap.getWidth() > bitmap.getHeight()) {
-            Matrix matrix = new Matrix();
-            matrix.postRotate(orientation);
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+            // store the bitmap in the JNI "world"
+            final JniBitmapHolder bitmapHolder=new JniBitmapHolder(bitmap);
+            // no need for the bitmap on the java "world", since the operations are done on the JNI "world"
+            bitmap.recycle();
+
+            //rotate the bitmap:
+            switch (Float.valueOf(orientation%360).intValue()) {
+                case 90:
+                case -270:
+                    bitmapHolder.rotateBitmapCw90();
+                    break;
+                case 180:
+                case -180:
+                    bitmapHolder.rotateBitmap180();
+                    break;
+                case 270:
+                case -90:
+                    bitmapHolder.rotateBitmapCcw90();
+                    break;
+            }
+
+            //get the output java bitmap , and free the one on the JNI "world"
+            bitmap=bitmapHolder.getBitmapAndFree();
+
             Timber.d("createBitmap: %1dms", System.currentTimeMillis() - time);
         }
         time = System.currentTimeMillis();

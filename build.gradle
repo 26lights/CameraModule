@@ -38,3 +38,8 @@ allprojects {
         mavenCentral()
     }
 }
+
+ext {
+    propBuildToolsVersion = '23.0.2'
+    propCompileSdkVersion = 23
+}

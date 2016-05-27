@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 
-version = "1.0.1-26L"
+version = "1.1.0-26L"
 group = "yalantis.cameramodule"
 
 repositories {
@@ -31,6 +31,7 @@ android {
 }
 
 dependencies {
+    compile project(':jni-bitmap-operations')
     compile 'com.edmodo:cropper:1.0.1'
     compile 'com.squareup.picasso:picasso:2.2.0'
     compile 'com.jakewharton.timber:timber:2.2.2'

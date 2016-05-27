@@ -1,1 +1,3 @@
-include ':camera-module', ':sample', ':sample'
+include ':camera-module', ':sample', ':jni-bitmap-operations', ':jni-bitmap-operations-sample'
+project(':jni-bitmap-operations').projectDir = new File('AndroidJniBitmapOperations/JniBitmapOperationsLibrary')
+project(':jni-bitmap-operations-sample').projectDir = new File('AndroidJniBitmapOperations/sample')
