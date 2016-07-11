@@ -151,9 +151,11 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
         }
         initScreenParams();
         parameters = camera.getParameters();
-        zoomRatios = parameters.getZoomRatios();
-        zoomIndex = minZoomIndex = 0;
-        maxZoomIndex = parameters.getMaxZoom();
+        if(parameters.isZoomSupported()) {
+            zoomRatios = parameters.getZoomRatios();
+            zoomIndex = minZoomIndex = 0;
+            maxZoomIndex = parameters.getMaxZoom();
+        }
         previewSizes = buildPreviewSizesRatioMap(parameters.getSupportedPreviewSizes());
         pictureSizes = buildPictureSizesRatioMap(parameters.getSupportedPictureSizes());
         List<String> sceneModes = parameters.getSupportedSceneModes();
@@ -242,7 +244,7 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
         setPreviewContainerSize(mScreenWidth, mScreenHeight, ratio);
 
         mZoomRatioTextView = (TextView) view.findViewById(R.id.zoom_ratio);
-        if (mZoomRatioTextView != null) {
+        if (mZoomRatioTextView != null && parameters.isZoomSupported()) {
             setZoomRatioText(zoomIndex);
         }
 
@@ -541,13 +543,15 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     }
 
     private void setZoom(int index) {
-        parameters.setZoom(index);
-        camera.setParameters(parameters);
-        setZoomRatioText(index);
+        if(parameters.isZoomSupported()) {
+            parameters.setZoom(index);
+            camera.setParameters(parameters);
+            setZoomRatioText(index);
+        }
     }
 
     private void setZoomRatioText(int index) {
-        if (mZoomRatioTextView != null) {
+        if (mZoomRatioTextView != null && parameters.isZoomSupported()) {
             float value = zoomRatios.get(index) / 100.0f;
             mZoomRatioTextView.setText(getString(R.string.lbl_zoom_ratio_value, value));
         }
