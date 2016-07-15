@@ -44,19 +44,27 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
     private byte[] data;
     private String name;
     private String path;
+    private Integer maxSize;
     private int orientation;
     private PhotoSavedListener callback;
+    private int compressQuality;
 
     public SavingPhotoTask(byte[] data, String name, String path, int orientation) {
-        this(data, name, path, orientation, null);
+        this(data, name, path, orientation, null, null, CameraConst.COMPRESS_QUALITY);
     }
 
     public SavingPhotoTask(byte[] data, String name, String path, int orientation, PhotoSavedListener callback) {
+        this(data, name, path, orientation, null, callback, CameraConst.COMPRESS_QUALITY);
+    }
+
+    public SavingPhotoTask(byte[] data, String name, String path, int orientation, Integer maxSize, PhotoSavedListener callback, int compressQuality) {
         this.data = data;
         this.name = name;
         this.path = path;
+        this.maxSize = maxSize;
         this.orientation = orientation;
         this.callback = callback;
+        this.compressQuality = compressQuality;
     }
 
     @Override
@@ -70,12 +78,7 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(photo);
-            if (orientation == ExifInterface.ORIENTATION_UNDEFINED) {
-                saveByteArray(fos, data);
-            } else {
-                saveByteArrayWithOrientation(fos, data, orientation);
-            }
-
+            saveByteArray(fos, data, orientation);
         } catch (FileNotFoundException e) {
             Timber.e(e, "File not found: " + e.getMessage());
         } catch (IOException e) {
@@ -93,13 +96,7 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
         return photo;
     }
 
-    private void saveByteArray(FileOutputStream fos, byte[] data) throws IOException {
-        long time = System.currentTimeMillis();
-        fos.write(data);
-        Timber.d("saveByteArray: %1dms", System.currentTimeMillis() - time);
-    }
-
-    private void saveByteArrayWithOrientation(FileOutputStream fos, byte[] data, int orientation) {
+    private void saveByteArray(FileOutputStream fos, byte[] data, int orientation) {
         long totalTime = System.currentTimeMillis();
         long time = System.currentTimeMillis();
 
@@ -107,15 +104,28 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
         Timber.d("decodeByteArray: %1dms", System.currentTimeMillis() - time);
 
         time = System.currentTimeMillis();
-        if (orientation != 0 && bitmap.getWidth() > bitmap.getHeight()) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
 
-            // store the bitmap in the JNI "world"
-            final JniBitmapHolder bitmapHolder=new JniBitmapHolder(bitmap);
-            // no need for the bitmap on the java "world", since the operations are done on the JNI "world"
-            bitmap.recycle();
+        // store the bitmap in the JNI "world"
+        final JniBitmapHolder bitmapHolder=new JniBitmapHolder(bitmap);
 
+        if(maxSize != null) {
+            if(width > height && width > maxSize) {
+                float ratio = (float)height/width;
+                bitmapHolder.scaleBitmap(maxSize, (int)(maxSize*ratio), JniBitmapHolder.ScaleMethod.BilinearInterpolation);
+            } else if (height > width && height > maxSize) {
+                float ratio = (float)width/height;
+                bitmapHolder.scaleBitmap((int)(maxSize*ratio), maxSize, JniBitmapHolder.ScaleMethod.BilinearInterpolation);
+            }
+        }
+
+        // no need for the bitmap on the java "world", since the operations are done on the JNI "world"
+        bitmap.recycle();
+
+        if(orientation != ExifInterface.ORIENTATION_UNDEFINED) {
             //rotate the bitmap:
-            switch (Float.valueOf(orientation%360).intValue()) {
+            switch (Float.valueOf(orientation % 360).intValue()) {
                 case 90:
                 case -270:
                     bitmapHolder.rotateBitmapCw90();
@@ -129,14 +139,14 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
                     bitmapHolder.rotateBitmapCcw90();
                     break;
             }
-
-            //get the output java bitmap , and free the one on the JNI "world"
-            bitmap=bitmapHolder.getBitmapAndFree();
-
-            Timber.d("createBitmap: %1dms", System.currentTimeMillis() - time);
         }
+
+        //get the output java bitmap , and free the one on the JNI "world"
+        bitmap=bitmapHolder.getBitmapAndFree();
+
+        Timber.d("createBitmap: %1dms", System.currentTimeMillis() - time);
         time = System.currentTimeMillis();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, CameraConst.COMPRESS_QUALITY, fos);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, compressQuality, fos);
         Timber.d("compress: %1dms", System.currentTimeMillis() - time);
 
         bitmap.recycle();
