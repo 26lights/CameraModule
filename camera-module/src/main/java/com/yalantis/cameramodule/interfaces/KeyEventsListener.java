@@ -29,6 +29,6 @@ public interface KeyEventsListener {
 
     public void zoomOut();
 
-    public void takePhoto();
+    public boolean takePhoto();
 
 }

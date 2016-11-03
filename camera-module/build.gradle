@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 
-version = "1.1.4-26L"
+version = "1.1.5-26L"
 group = "yalantis.cameramodule"
 
 repositories {

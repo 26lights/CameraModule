@@ -27,6 +27,7 @@ import android.content.res.Resources;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
 import android.view.View;
@@ -217,8 +218,8 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
 
                 @Override
                 public void onClick(View v) {
-                    keyEventsListener.takePhoto();
-                    cameraPreview.takePicture();
+                    if(keyEventsListener.takePhoto())
+                        cameraPreview.takePicture();
                 }
 
             });
@@ -460,6 +461,7 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     }
 
     private void initParams() {
+
         setFlashMode(parameters, flashMode);
 
         setPreviewSize(parameters, ratio);
@@ -534,12 +536,13 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     }
 
     @Override
-    public void takePhoto() {
+    public boolean takePhoto() {
         mCapture.setEnabled(false);
         mCapture.setVisibility(View.INVISIBLE);
         if (progressBar != null) {
             progressBar.setVisibility(View.VISIBLE);
         }
+        return true;
     }
 
     private void setZoom(int index) {
@@ -575,30 +578,34 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     }
 
     private void setHDRMode(Camera.Parameters parameters, HDRMode hdrMode) {
-        if (supportedHDR && hdrMode == HDRMode.NONE) {
-            hdrMode = HDRMode.OFF;
-        }
-        switch (hdrMode) {
-            case ON:
-                parameters.setSceneMode(Camera.Parameters.SCENE_MODE_HDR);
-                break;
-            case OFF:
-                parameters.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
-                break;
+        if (supportedHDR) {
+            if(hdrMode == HDRMode.NONE) {
+                hdrMode = HDRMode.OFF;
+            }
+            switch (hdrMode) {
+                case ON:
+                    parameters.setSceneMode(Camera.Parameters.SCENE_MODE_HDR);
+                    break;
+                case OFF:
+                    parameters.setSceneMode(Camera.Parameters.SCENE_MODE_AUTO);
+                    break;
+            }
         }
     }
 
     private void setFlashMode(Camera.Parameters parameters, FlashMode flashMode) {
-        switch (flashMode) {
-            case ON:
-                parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
-                break;
-            case OFF:
-                parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                break;
-            case AUTO:
-                parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
-                break;
+        if(supportedFlash) {
+            switch (flashMode) {
+                case ON:
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+                    break;
+                case OFF:
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                    break;
+                case AUTO:
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+                    break;
+            }
         }
     }
 
@@ -619,12 +626,14 @@ public class CameraFragment extends com.yalantis.cameramodule.fragment.BaseFragm
     private void setPictureSize(Camera.Parameters parameters, Quality quality, Ratio ratio) {
         Camera.Size size = pictureSizes.get(ratio).get(quality);
         if (size != null) {
+            Log.d("CameraFragment", "setPictureSize("+String.valueOf(size.width)+", "+String.valueOf(size.height)+")");
             parameters.setPictureSize(size.width, size.height);
         }
     }
 
     private void setPreviewSize(Camera.Parameters parameters, Ratio ratio) {
         Camera.Size size = previewSizes.get(ratio);
+        Log.d("CameraFragment", "setPreviewSize("+String.valueOf(size.width)+", "+String.valueOf(size.height)+")");
         parameters.setPreviewSize(size.width, size.height);
     }
 
