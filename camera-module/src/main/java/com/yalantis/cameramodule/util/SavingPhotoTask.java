@@ -31,6 +31,7 @@ import java.io.IOException;
 import timber.log.Timber;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -107,42 +108,71 @@ public class SavingPhotoTask extends AsyncTask<Void, Void, File> {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
 
-        // store the bitmap in the JNI "world"
-        final JniBitmapHolder bitmapHolder=new JniBitmapHolder(bitmap);
+        try {
+            // store the bitmap in the JNI "world"
+            final JniBitmapHolder bitmapHolder = new JniBitmapHolder(bitmap);
 
-        if(maxSize != null) {
-            if(width > height && width > maxSize) {
-                float ratio = (float)height/width;
-                bitmapHolder.scaleBitmap(maxSize, (int)(maxSize*ratio), JniBitmapHolder.ScaleMethod.BilinearInterpolation);
-            } else if (height > width && height > maxSize) {
-                float ratio = (float)width/height;
-                bitmapHolder.scaleBitmap((int)(maxSize*ratio), maxSize, JniBitmapHolder.ScaleMethod.BilinearInterpolation);
+            if (maxSize != null) {
+                if (width > height && width > maxSize) {
+                    float ratio = (float) height / width;
+                    width = maxSize;
+                    height = (int) (maxSize * ratio);
+                    bitmapHolder.scaleBitmap(width, height, JniBitmapHolder.ScaleMethod.BilinearInterpolation);
+                } else if (height > width && height > maxSize) {
+                    float ratio = (float) width / height;
+                    width = (int) (maxSize * ratio);
+                    height = maxSize;
+                    bitmapHolder.scaleBitmap(width, height, JniBitmapHolder.ScaleMethod.BilinearInterpolation);
+                }
             }
-        }
 
-        // no need for the bitmap on the java "world", since the operations are done on the JNI "world"
-        bitmap.recycle();
+            // no need for the bitmap on the java "world", since the operations are done on the JNI "world"
+            bitmap.recycle();
 
-        if(orientation != ExifInterface.ORIENTATION_UNDEFINED) {
-            //rotate the bitmap:
-            switch (Float.valueOf(orientation % 360).intValue()) {
-                case 90:
-                case -270:
-                    bitmapHolder.rotateBitmapCw90();
-                    break;
-                case 180:
-                case -180:
-                    bitmapHolder.rotateBitmap180();
-                    break;
-                case 270:
-                case -90:
-                    bitmapHolder.rotateBitmapCcw90();
-                    break;
+            if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
+                //rotate the bitmap:
+                switch (Float.valueOf(orientation % 360).intValue()) {
+                    case 90:
+                    case -270:
+                        bitmapHolder.rotateBitmapCw90();
+                        break;
+                    case 180:
+                    case -180:
+                        bitmapHolder.rotateBitmap180();
+                        break;
+                    case 270:
+                    case -90:
+                        bitmapHolder.rotateBitmapCcw90();
+                        break;
+                }
             }
-        }
 
-        //get the output java bitmap , and free the one on the JNI "world"
-        bitmap=bitmapHolder.getBitmapAndFree();
+            //get the output java bitmap , and free the one on the JNI "world"
+            bitmap = bitmapHolder.getBitmapAndFree();
+        } catch (Exception e) {
+
+            if (maxSize != null) {
+                Bitmap oldBitmap = bitmap;
+                if (width > height && width > maxSize) {
+                    float ratio = (float) height / width;
+                    width = maxSize;
+                    height = (int) (maxSize * ratio);
+                    bitmap = Bitmap.createScaledBitmap(oldBitmap, width, height, true);
+                } else if (height > width && height > maxSize) {
+                    float ratio = (float) width / height;
+                    width = (int) (maxSize * ratio);
+                    height = maxSize;
+                    bitmap = Bitmap.createScaledBitmap(oldBitmap, width, height, true);
+                }
+                if(oldBitmap != bitmap) {
+                    oldBitmap.recycle();
+                }
+            }
+
+            Matrix matrix = new Matrix();
+            matrix.postRotate(orientation);
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+        }
 
         Timber.d("createBitmap: %1dms", System.currentTimeMillis() - time);
         time = System.currentTimeMillis();
